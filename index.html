@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Homework Planner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, sans-serif; background: #fafaf9; color: #1c1917; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  input, select, button { font-family: inherit; }
+  input:focus, select:focus { outline: 2px solid #a8a29e; outline-offset: -1px; }
+  button { -webkit-tap-highlight-color: transparent; }
+  .container { max-width: 520px; margin: 0 auto; padding: 0 16px 40px; }
+  .header { padding-top: 28px; padding-bottom: 8px; }
+  .header h1 { font-family: 'DM Serif Display', serif; font-size: 28px; font-weight: 400; letter-spacing: -0.01em; }
+  .header .subtitle { margin-top: 4px; font-size: 14px; color: #78716c; }
+  .sync-time { margin-left: 8px; font-size: 12px; color: #a8a29e; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin: 16px 0; background: #e7e5e4; border-radius: 10px; padding: 3px; }
+  .tab { flex: 1; padding: 9px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; background: transparent; color: #78716c; transition: all 0.15s; }
+  .tab.active { background: #fff; color: #1c1917; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .tab-settings { flex: none !important; padding: 9px 14px !important; }
+
+  /* Cards */
+  .card { background: #fff; border-radius: 14px; border: 1px solid #e7e5e4; padding: 20px; }
+  .card-sm { border-radius: 12px; padding: 14px 16px; }
+  .card-row { background: #fff; border-radius: 12px; border: 1px solid #e7e5e4; padding: 14px 16px; }
+
+  /* Badges */
+  .badge { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; display: inline-block; }
+  .badge-class { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .badge-recurring { font-size: 10px; font-weight: 600; color: #7c3aed; background: #f5f3ff; padding: 2px 7px; border-radius: 4px; }
+  .badge-progress { font-size: 10px; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 2px 6px; border-radius: 3px; }
+
+  /* Summary bar */
+  .summary { display: flex; justify-content: space-between; padding: 16px 18px; margin-bottom: 14px; }
+  .summary-label { font-size: 12px; color: #78716c; font-weight: 600; letter-spacing: 0.04em; }
+  .summary-value { font-size: 26px; font-weight: 700; font-family: 'DM Serif Display', serif; }
+
+  /* Setup */
+  .setup-box { background: #f5f5f4; border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.7; color: #57534e; }
+  .setup-box strong { color: #1c1917; }
+
+  /* Form */
+  .form-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .form-input { flex: 1; padding: 11px 14px; border-radius: 8px; border: 1px solid #d6d3d1; font-size: 14px; min-width: 0; background: #fff; }
+  .btn-primary { padding: 11px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; background: #1c1917; color: #fff; white-space: nowrap; }
+  .btn-primary:disabled { background: #d6d3d1; cursor: default; }
+  .btn-refresh { display: block; margin: 16px auto 0; padding: 8px 20px; border-radius: 8px; border: 1px solid #d6d3d1; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: #78716c; }
+  .btn-link { background: none; border: none; cursor: pointer; font-size: 14px; color: #78716c; text-decoration: underline; text-underline-offset: 3px; }
+
+  .error-box { padding: 10px 14px; border-radius: 8px; background: #fef2f2; color: #dc2626; font-size: 13px; margin-bottom: 12px; }
+  .status-box { padding: 8px 14px; border-radius: 8px; background: #eff6ff; color: #2563eb; font-size: 13px; margin-bottom: 12px; }
+  .empty-state { text-align: center; padding: 44px 20px; }
+  .section-label { font-size: 12px; font-weight: 700; color: #78716c; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .section-label-purple { color: #7c3aed; }
+  .card-stack { display: flex; flex-direction: column; gap: 8px; }
+  .card-stack-tight { gap: 6px; }
+  .notes { font-size: 12px; color: #a8a29e; margin-top: 5px; font-style: italic; }
+  .completed-note { font-size: 13px; color: #a8a29e; text-align: center; margin-top: 16px; }
+  .divider { text-align: center; padding-top: 12px; border-top: 1px solid #e7e5e4; margin-top: 8px; }
+  .info-box-purple { background: #f5f3ff; border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.7; color: #57534e; }
+  .info-box-purple strong { color: #7c3aed; }
+
+  .fade-in { animation: fadeIn 0.2s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback } = React;
+
+const TYPES_MAP = {
+  "Daily Homework": { icon: "📝", key: "daily" },
+  "Project/Paper": { icon: "📊", key: "project" },
+  "Test/Quiz": { icon: "📖", key: "test" },
+  "Reading": { icon: "📚", key: "reading" },
+  "Recurring Chunk": { icon: "🔁", key: "recurring" },
+};
+
+const CLASS_COLORS = {
+  English: { bg: "#dbeafe", text: "#1e40af" },
+  Math: { bg: "#fce7f3", text: "#9d174d" },
+  Science: { bg: "#d1fae5", text: "#065f46" },
+  History: { bg: "#fef3c7", text: "#92400e" },
+  Spanish: { bg: "#ede9fe", text: "#5b21b6" },
+  Art: { bg: "#fce4ec", text: "#880e4f" },
+  PE: { bg: "#e0f2f1", text: "#004d40" },
+  Other: { bg: "#f3f4f6", text: "#374151" },
+};
+
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const LS_KEY = "hw_planner_url";
+
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || "").trim());
+    return obj;
+  }).filter(row => Object.values(row).some(v => v));
+}
+
+function parseCSVLine(line) {
+  const result = []; let current = ""; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQ) {
+      if (ch === '"' && line[i+1] === '"') { current += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else current += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { result.push(current); current = ""; }
+      else current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function parseDateStr(s) {
+  if (!s) return null;
+  let d;
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) d = new Date(s.slice(0,10) + "T12:00:00");
+  else if (/^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(s)) {
+    const p = s.split("/"); let y = parseInt(p[2]); if (y < 100) y += 2000;
+    d = new Date(y, parseInt(p[0])-1, parseInt(p[1]), 12);
+  } else d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function getDaysUntil(date) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const t = new Date(date); t.setHours(0,0,0,0);
+  return Math.round((t - now) / 86400000);
+}
+
+function formatDue(date) {
+  const d = getDaysUntil(date);
+  if (d < 0) return `${Math.abs(d)}d overdue`;
+  if (d === 0) return "Today";
+  if (d === 1) return "Tomorrow";
+  const name = date.toLocaleDateString("en-US", { weekday: "short" });
+  if (d <= 7) return `${name} (${d}d)`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ` (${d}d)`;
+}
+
+function priorityScore(a) {
+  const d = getDaysUntil(a.dueDate);
+  const isProj = a.typeKey === "project" || a.typeKey === "test";
+  if (d < 0) return 1000 + Math.abs(d) * 10;
+  if (d === 0) return 900;
+  if (d === 1) return 800;
+  if (a.typeKey === "recurring" && a.isToday) return 750;
+  if (isProj) return 500 + (Math.ceil((a.minutes||30) / 30) / Math.max(d,1)) * 300;
+  if (a.typeKey === "recurring") return 350 - d * 20;
+  return Math.max(0, 400 - d * 40);
+}
+
+function priorityLabel(score) {
+  if (score >= 900) return { text: "DO NOW", color: "#dc2626", bg: "#fef2f2" };
+  if (score >= 700) return { text: "URGENT", color: "#ea580c", bg: "#fff7ed" };
+  if (score >= 400) return { text: "START SOON", color: "#d97706", bg: "#fffbeb" };
+  if (score >= 200) return { text: "PLAN AHEAD", color: "#2563eb", bg: "#eff6ff" };
+  return { text: "ON RADAR", color: "#6b7280", bg: "#f9fafb" };
+}
+
+function generateRecurringChunks(defs) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayIdx = today.getDay();
+  const chunks = [];
+  for (const def of defs) {
+    const dueIdx = DAYS.indexOf(def.dueDay);
+    const startIdx = DAYS.indexOf(def.startDay);
+    if (dueIdx === -1 || startIdx === -1) continue;
+    const sessions = def.sessions || 5;
+    const minPer = Math.ceil((def.totalMinutes || 60) / sessions);
+    let daysUntilDue = (dueIdx - todayIdx + 7) % 7;
+    const dueDate = new Date(today); dueDate.setDate(dueDate.getDate() + daysUntilDue);
+    let span = (dueIdx - startIdx + 7) % 7; if (span === 0) span = 7;
+    const startDate = new Date(dueDate); startDate.setDate(startDate.getDate() - span);
+    const sessionDays = [];
+    for (let i = 0; i < sessions && i < span; i++) {
+      const sd = new Date(startDate); sd.setDate(sd.getDate() + i); sessionDays.push(sd);
+    }
+    const todayStr = today.toDateString();
+    if (today >= startDate && today <= dueDate) {
+      let sn = 0, isSess = false;
+      for (let i = 0; i < sessionDays.length; i++) {
+        if (sessionDays[i].toDateString() === todayStr) { sn = i+1; isSess = true; break; }
+      }
+      chunks.push({
+        title: def.title, className: def.className, type: "Recurring Chunk", typeKey: "recurring",
+        dueDate, minutes: minPer, status: "Not Started",
+        notes: isSess ? `Session ${sn} of ${sessions} · ${minPer} min today` + (def.notes ? ` · ${def.notes}` : "") : (def.notes || ""),
+        isToday: isSess, isRecurring: true,
+        sessionInfo: isSess ? `Session ${sn}/${sessions}` : `${sessions} sessions, ${def.startDay}–${DAYS[(dueIdx-1+7)%7].slice(0,3)}`,
+      });
+    }
+  }
+  return chunks;
+}
+
+function buildDailyPlan(assignments) {
+  const maxMin = 150;
+  const active = assignments.filter(a => a.status !== "Done").map(a => ({...a, score: priorityScore(a)})).sort((a,b) => b.score - a.score);
+  const plan = []; let total = 0;
+  for (const a of active) {
+    const d = getDaysUntil(a.dueDate);
+    if (a.typeKey === "recurring" && a.isToday) { plan.push({...a, todayMin: a.minutes, reason: `Today's chunk · Due ${formatDue(a.dueDate)}`}); total += a.minutes; continue; }
+    if (d <= 0) { plan.push({...a, todayMin: a.minutes, reason: d < 0 ? "Overdue!" : "Due today"}); total += a.minutes; continue; }
+    if (d === 1) { plan.push({...a, todayMin: a.minutes, reason: "Due tomorrow"}); total += a.minutes; continue; }
+    if ((a.typeKey === "project" || a.typeKey === "test") && d <= a.minutes / 20) {
+      const chunk = Math.min(Math.ceil(a.minutes / Math.max(d,1)), 45);
+      if (total + chunk <= maxMin + 30) { plan.push({...a, todayMin: chunk, reason: `${chunk} min chunk — stay on track`}); total += chunk; }
+      continue;
+    }
+    if (d <= 3 && total < maxMin) {
+      const chunk = Math.min(a.minutes, maxMin - total);
+      if (chunk >= 10) { plan.push({...a, todayMin: chunk, reason: `Due in ${d} days`}); total += chunk; }
+    }
+  }
+  return { plan, totalMinutes: total };
+}
+
+function transformSheetData(rows) {
+  return rows.filter(r => r["Assignment"] && r["Due Date"]).map(r => {
+    const type = r["Type"] || "Daily Homework";
+    const ti = TYPES_MAP[type] || TYPES_MAP["Daily Homework"];
+    return { title: r["Assignment"], className: r["Class"] || "Other", type, typeKey: ti.key,
+      dueDate: parseDateStr(r["Due Date"]), minutes: parseInt(r["Est. Minutes"]) || 30,
+      status: r["Status"] || "Not Started", notes: r["Notes"] || "" };
+  }).filter(a => a.dueDate !== null);
+}
+
+function transformRecurringData(rows) {
+  const defs = rows.filter(r => r["Assignment"] && r["Due Day"]).map(r => ({
+    title: r["Assignment"], className: r["Class"] || "Other", dueDay: r["Due Day"],
+    startDay: r["Start Day"] || "Monday", totalMinutes: parseInt(r["Total Minutes"]) || 60,
+    sessions: parseInt(r["Sessions"]) || 5, notes: r["Notes"] || "",
+  }));
+  return generateRecurringChunks(defs);
+}
+
+function buildSheetUrl(baseUrl, gid) {
+  try {
+    const url = new URL(baseUrl);
+    url.searchParams.set("gid", gid.toString());
+    url.searchParams.set("single", "true");
+    url.searchParams.set("output", "csv");
+    return url.toString();
+  } catch { return baseUrl.split("?")[0] + `?gid=${gid}&single=true&output=csv`; }
+}
+
+function getDemoData() {
+  const today = new Date();
+  const d = (n) => { const dt = new Date(today); dt.setDate(dt.getDate() + n); return dt; };
+  const assignments = [
+    { title: "Read Ch. 12 — To Kill a Mockingbird", className: "English", type: "Reading", typeKey: "reading", dueDate: d(1), minutes: 30, status: "Not Started", notes: "Answer questions at end of chapter" },
+    { title: "Worksheet 7.3 — Linear Equations", className: "Math", type: "Daily Homework", typeKey: "daily", dueDate: d(1), minutes: 25, status: "Not Started", notes: "" },
+    { title: "Spanish vocab quiz — Unit 5", className: "Spanish", type: "Test/Quiz", typeKey: "test", dueDate: d(3), minutes: 45, status: "Not Started", notes: "Study Quizlet flashcards" },
+    { title: "History essay — Causes of WWI", className: "History", type: "Project/Paper", typeKey: "project", dueDate: d(7), minutes: 90, status: "Not Started", notes: "3 pages, MLA, need 3 sources" },
+    { title: "Science lab report — Density", className: "Science", type: "Project/Paper", typeKey: "project", dueDate: d(4), minutes: 60, status: "Not Started", notes: "Include data table and graph" },
+    { title: "Math practice problems pg 204", className: "Math", type: "Daily Homework", typeKey: "daily", dueDate: d(0), minutes: 20, status: "Not Started", notes: "Odd numbers only" },
+  ];
+  const recurring = generateRecurringChunks([
+    { title: "Online Math Program — 60 problems", className: "Math", dueDay: "Friday", startDay: "Sunday", totalMinutes: 100, sessions: 5, notes: "12 problems per session" },
+  ]);
+  return { assignments, recurring };
+}
+
+function AssignmentCard({ item, showReason, todayMin }) {
+  const p = priorityLabel(item.score || priorityScore(item));
+  const cc = CLASS_COLORS[item.className] || CLASS_COLORS.Other;
+  const ti = TYPES_MAP[item.type] || TYPES_MAP["Daily Homework"];
+  return (
+    <div className="card-row fade-in" style={{ opacity: item.status === "Done" ? 0.45 : 1 }}>
+      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6, flexWrap: "wrap" }}>
+        <span className="badge" style={{ color: p.color, background: p.bg }}>{p.text}</span>
+        <span className="badge-class" style={{ color: cc.text, background: cc.bg }}>{item.className}</span>
+        <span style={{ fontSize: 12, color: "#a8a29e" }}>{ti.icon}</span>
+        {item.isRecurring && <span className="badge-recurring">{item.sessionInfo || "WEEKLY"}</span>}
+        {item.status === "In Progress" && <span className="badge-progress">IN PROGRESS</span>}
+      </div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: "#1c1917", marginBottom: 4 }}>{item.title}</div>
+      <div style={{ fontSize: 13, color: "#78716c" }}>
+        {showReason && item.reason && <>{item.reason} · </>}
+        {todayMin ? `${todayMin} min` : `${item.minutes} min`}
+        {!showReason && <> · Due {formatDue(item.dueDate)}</>}
+      </div>
+      {item.notes && <div className="notes">{item.notes}</div>}
+    </div>
+  );
+}
+
+function App() {
+  const [assignments, setAssignments] = useState([]);
+  const [recurringChunks, setRecurringChunks] = useState([]);
+  const [view, setView] = useState("today");
+  const [csvUrl, setCsvUrl] = useState(() => {
+    try { return localStorage.getItem(LS_KEY) || ""; } catch { return ""; }
+  });
+  const [urlInput, setUrlInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [lastSync, setLastSync] = useState(null);
+  const [showSetup, setShowSetup] = useState(true);
+  const [useDemo, setUseDemo] = useState(false);
+  const [status, setStatus] = useState("");
+
+  const fetchSheet = useCallback(async (url) => {
+    if (!url) return;
+    setLoading(true); setError(""); setStatus("Fetching assignments…");
+    try {
+      const url0 = buildSheetUrl(url, 0);
+      const res1 = await fetch(url0);
+      if (!res1.ok) throw new Error("Could not fetch sheet. Check the URL and that it's published.");
+      const text1 = await res1.text();
+      if (text1.includes("<!DOCTYPE") || text1.includes("<html")) throw new Error("Got an HTML page instead of CSV. Make sure you published as CSV format.");
+      const transformed = transformSheetData(parseCSV(text1));
+
+      let recurChunks = [];
+      setStatus("Checking for recurring assignments…");
+      for (const gid of [1, 2, 100, 200, 1000000000]) {
+        try {
+          const res2 = await fetch(buildSheetUrl(url, gid));
+          if (!res2.ok) continue;
+          const text2 = await res2.text();
+          if (text2.includes("<!DOCTYPE")) continue;
+          const rows2 = parseCSV(text2);
+          if (rows2.length > 0 && rows2[0]["Assignment"] && rows2[0]["Due Day"]) {
+            recurChunks = transformRecurringData(rows2);
+            break;
+          }
+        } catch { continue; }
+      }
+
+      if (transformed.length === 0 && recurChunks.length === 0)
+        throw new Error("No valid assignments found. Check column headers match the template.");
+
+      setAssignments(transformed);
+      setRecurringChunks(recurChunks);
+      setLastSync(new Date());
+      setShowSetup(false);
+      setStatus("");
+      try { localStorage.setItem(LS_KEY, url); } catch {}
+    } catch (e) { setError(e.message); setStatus(""); }
+    finally { setLoading(false); }
+  }, []);
+
+  // Auto-load saved URL on mount
+  useEffect(() => {
+    if (csvUrl) { setUrlInput(csvUrl); fetchSheet(csvUrl); }
+  }, []);
+
+  // Auto-refresh every 5 min
+  useEffect(() => {
+    if (!csvUrl) return;
+    const iv = setInterval(() => fetchSheet(csvUrl), 5 * 60 * 1000);
+    return () => clearInterval(iv);
+  }, [csvUrl, fetchSheet]);
+
+  function connectSheet() {
+    if (!urlInput.trim()) return;
+    setCsvUrl(urlInput.trim());
+    fetchSheet(urlInput.trim());
+  }
+
+  function loadDemo() {
+    const { assignments: a, recurring: r } = getDemoData();
+    setAssignments(a); setRecurringChunks(r);
+    setUseDemo(true); setShowSetup(false); setLastSync(new Date());
+  }
+
+  const allItems = useMemo(() => [...assignments, ...recurringChunks], [assignments, recurringChunks]);
+  const todayPlan = useMemo(() => buildDailyPlan(allItems), [allItems]);
+  const activeAll = useMemo(() => allItems.filter(a => a.status !== "Done").map(a => ({...a, score: priorityScore(a)})).sort((a,b) => b.score - a.score), [allItems]);
+  const completedCount = allItems.filter(a => a.status === "Done").length;
+
+  return (
+    <>
+      <div className="header">
+        <h1>Homework Planner</h1>
+        <p className="subtitle">
+          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          {lastSync && !showSetup && <span className="sync-time">· Synced {lastSync.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>}
+        </p>
+      </div>
+
+      {showSetup ? (
+        <div className="card" style={{ marginTop: 16 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Connect Your Google Sheet</h2>
+          <p style={{ fontSize: 14, color: "#78716c", marginBottom: 20, lineHeight: 1.5 }}>
+            Paste the published CSV URL from your Google Sheet. Both of you can add assignments from any device.
+          </p>
+          <div className="setup-box" style={{ marginBottom: 20 }}>
+            <strong>One-time setup:</strong><br/>
+            1. Upload the spreadsheet template to Google Sheets<br/>
+            2. Go to <strong>File → Share → Publish to web</strong><br/>
+            3. Select <strong>"Entire Document"</strong> → <strong>"CSV"</strong><br/>
+            4. Click <strong>Publish</strong> and paste the URL below
+          </div>
+          <div className="form-row">
+            <input className="form-input" type="url" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv"
+              value={urlInput} onChange={e => setUrlInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && connectSheet()} />
+            <button className="btn-primary" onClick={connectSheet} disabled={loading || !urlInput.trim()}>
+              {loading ? "Loading…" : "Connect"}
+            </button>
+          </div>
+          {status && <div className="status-box">{status}</div>}
+          {error && <div className="error-box">{error}</div>}
+          <div className="divider">
+            <button className="btn-link" onClick={loadDemo}>Try with demo data first</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="tabs">
+            {[{key:"today",label:"Today's Plan"},{key:"all",label:"All"},{key:"settings",label:"⚙"}].map(t => (
+              <button key={t.key} className={`tab ${view===t.key?"active":""} ${t.key==="settings"?"tab-settings":""}`}
+                onClick={() => setView(t.key)}>{t.label}</button>
+            ))}
+          </div>
+
+          {view === "today" && (
+            <div>
+              {todayPlan.plan.length > 0 ? (
+                <>
+                  <div className="card summary">
+                    <div><div className="summary-label">TODAY'S WORKLOAD</div><div className="summary-value">{todayPlan.totalMinutes} min</div></div>
+                    <div style={{ textAlign: "right" }}><div className="summary-label">TASKS</div><div className="summary-value">{todayPlan.plan.length}</div></div>
+                  </div>
+                  <div className="card-stack">
+                    {todayPlan.plan.map((item, i) => <AssignmentCard key={i} item={item} showReason todayMin={item.todayMin} />)}
+                  </div>
+                </>
+              ) : (
+                <div className="card empty-state">
+                  <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
+                  <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Nothing urgent today!</p>
+                  <p style={{ fontSize: 14, color: "#78716c" }}>
+                    {activeAll.length > 0 ? `${activeAll.length} coming up.` : "All caught up."}
+                  </p>
+                </div>
+              )}
+              {csvUrl && <button className="btn-refresh" onClick={() => fetchSheet(csvUrl)} disabled={loading}>
+                {loading ? "Refreshing…" : "↻ Refresh from Sheet"}
+              </button>}
+            </div>
+          )}
+
+          {view === "all" && (
+            <div>
+              {recurringChunks.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div className="section-label section-label-purple">🔁 RECURRING ({recurringChunks.length})</div>
+                  <div className="card-stack card-stack-tight">
+                    {recurringChunks.map((item, i) => <AssignmentCard key={`r-${i}`} item={item} />)}
+                  </div>
+                </div>
+              )}
+              {assignments.filter(a => a.status !== "Done").length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div className="section-label">ASSIGNMENTS ({assignments.filter(a => a.status !== "Done").length})</div>
+                  <div className="card-stack card-stack-tight">
+                    {assignments.filter(a => a.status !== "Done").map(a => ({...a, score: priorityScore(a)})).sort((a,b) => b.score - a.score)
+                      .map((item, i) => <AssignmentCard key={`a-${i}`} item={item} />)}
+                  </div>
+                </div>
+              )}
+              {completedCount > 0 && <p className="completed-note">{completedCount} completed hidden</p>}
+              {activeAll.length === 0 && (
+                <div className="card empty-state"><p style={{ fontSize: 15, color: "#78716c" }}>No active assignments.</p></div>
+              )}
+            </div>
+          )}
+
+          {view === "settings" && (
+            <div className="card">
+              <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 16 }}>Settings</h2>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#78716c", display: "block", marginBottom: 6, letterSpacing: "0.04em" }}>GOOGLE SHEET CSV URL</label>
+                <div className="form-row" style={{ marginBottom: 0 }}>
+                  <input className="form-input" style={{ fontSize: 13, padding: "10px 12px" }} type="url" placeholder="Paste published CSV URL"
+                    value={urlInput || csvUrl} onChange={e => setUrlInput(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && connectSheet()} />
+                  <button className="btn-primary" style={{ fontSize: 13, padding: "10px 16px" }} onClick={connectSheet} disabled={loading}>
+                    {loading ? "…" : "Sync"}
+                  </button>
+                </div>
+                {error && <div className="error-box" style={{ marginTop: 8, marginBottom: 0 }}>{error}</div>}
+              </div>
+              <div className="setup-box" style={{ marginBottom: 16 }}>
+                <strong style={{ color: "#1c1917" }}>Priority levels:</strong><br/>
+                <span style={{ color: "#dc2626", fontWeight: 700 }}>DO NOW</span> — Overdue or due today<br/>
+                <span style={{ color: "#ea580c", fontWeight: 700 }}>URGENT</span> — Due tomorrow, or today's recurring chunk<br/>
+                <span style={{ color: "#d97706", fontWeight: 700 }}>START SOON</span> — 2–3 days, or projects needing daily work<br/>
+                <span style={{ color: "#2563eb", fontWeight: 700 }}>PLAN AHEAD</span> — This week<br/>
+                <span style={{ color: "#6b7280", fontWeight: 700 }}>ON RADAR</span> — Further out
+              </div>
+              <div className="info-box-purple">
+                <strong>🔁 Recurring assignments:</strong><br/>
+                Use the "Recurring" tab in your spreadsheet for weekly repeating work. The planner auto-generates daily chunks and shows them in Today's Plan on the right days.
+              </div>
+              {useDemo && (
+                <div style={{ marginTop: 16, textAlign: "center" }}>
+                  <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 8 }}>Using demo data</p>
+                  <button style={{ background: "none", border: "1px solid #d6d3d1", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13, color: "#57534e" }}
+                    onClick={() => { setShowSetup(true); setUseDemo(false); setAssignments([]); setRecurringChunks([]); setView("today"); }}>
+                    Connect real sheet
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(<App />);
+</script>
+</body>
+</html>
