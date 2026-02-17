@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Homework Planner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Sans 3', -apple-system, sans-serif; background: #fafaf9; color: #1c1917; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  input, select, button { font-family: inherit; }
+  input:focus, select:focus { outline: 2px solid #a8a29e; outline-offset: -1px; }
+  button { -webkit-tap-highlight-color: transparent; }
+  .container { max-width: 520px; margin: 0 auto; padding: 0 16px 40px; }
+  .header { padding-top: 28px; padding-bottom: 8px; }
+  .header h1 { font-family: 'DM Serif Display', serif; font-size: 28px; font-weight: 400; letter-spacing: -0.01em; }
+  .subtitle { margin-top: 4px; font-size: 14px; color: #78716c; }
+  .sync-time { margin-left: 8px; font-size: 12px; color: #a8a29e; }
+  .tabs { display: flex; gap: 4px; margin: 16px 0; background: #e7e5e4; border-radius: 10px; padding: 3px; }
+  .tab { flex: 1; padding: 9px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; background: transparent; color: #78716c; transition: all 0.15s; }
+  .tab.active { background: #fff; color: #1c1917; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .tab-sm { flex: none !important; padding: 9px 14px !important; }
+  .card { background: #fff; border-radius: 14px; border: 1px solid #e7e5e4; }
+  .card-pad { padding: 20px; }
+  .card-row { background: #fff; border-radius: 12px; border: 1px solid #e7e5e4; padding: 14px 16px; }
+  .badge { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; }
+  .badge-class { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .badge-rec { font-size: 10px; font-weight: 600; color: #7c3aed; background: #f5f3ff; padding: 2px 7px; border-radius: 4px; }
+  .badge-ip { font-size: 10px; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 2px 6px; border-radius: 3px; }
+  .summary { display: flex; justify-content: space-between; padding: 16px 18px; margin-bottom: 14px; }
+  .summary-label { font-size: 12px; color: #78716c; font-weight: 600; letter-spacing: 0.04em; }
+  .summary-val { font-size: 26px; font-weight: 700; font-family: 'DM Serif Display', serif; }
+  .info-box { background: #f5f5f4; border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.7; color: #57534e; }
+  .info-box strong { color: #1c1917; }
+  .info-purple { background: #f5f3ff; }
+  .info-purple strong { color: #7c3aed; }
+  .form-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .form-input { flex: 1; padding: 11px 14px; border-radius: 8px; border: 1px solid #d6d3d1; font-size: 14px; min-width: 0; background: #fff; }
+  .btn { padding: 11px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; background: #1c1917; color: #fff; white-space: nowrap; }
+  .btn:disabled { background: #d6d3d1; cursor: default; }
+  .btn-ref { display: block; margin: 16px auto 0; padding: 8px 20px; border-radius: 8px; border: 1px solid #d6d3d1; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: #78716c; }
+  .btn-link { background: none; border: none; cursor: pointer; font-size: 14px; color: #78716c; text-decoration: underline; text-underline-offset: 3px; }
+  .err { padding: 10px 14px; border-radius: 8px; background: #fef2f2; color: #dc2626; font-size: 13px; margin-bottom: 12px; }
+  .status { padding: 8px 14px; border-radius: 8px; background: #eff6ff; color: #2563eb; font-size: 13px; margin-bottom: 12px; }
+  .debug { padding: 10px 14px; border-radius: 8px; background: #f5f5f4; color: #57534e; font-size: 11px; margin-bottom: 12px; word-break: break-all; font-family: monospace; line-height: 1.5; }
+  .empty { text-align: center; padding: 44px 20px; }
+  .sec-label { font-size: 12px; font-weight: 700; color: #78716c; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .sec-purple { color: #7c3aed; }
+  .stack { display: flex; flex-direction: column; gap: 8px; }
+  .stack-tight { gap: 6px; }
+  .notes { font-size: 12px; color: #a8a29e; margin-top: 5px; font-style: italic; }
+  .divider { text-align: center; padding-top: 12px; border-top: 1px solid #e7e5e4; margin-top: 8px; }
+  .fade { animation: fadeIn 0.2s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback } = React;
+
+const TYPES_MAP = {
+  "Daily Homework": { icon: "📝", key: "daily" },
+  "Project/Paper": { icon: "📊", key: "project" },
+  "Test/Quiz": { icon: "📖", key: "test" },
+  "Reading": { icon: "📚", key: "reading" },
+  "Recurring Chunk": { icon: "🔁", key: "recurring" },
+};
+const CLASS_COLORS = {
+  English: { bg: "#dbeafe", text: "#1e40af" }, Math: { bg: "#fce7f3", text: "#9d174d" },
+  Science: { bg: "#d1fae5", text: "#065f46" }, History: { bg: "#fef3c7", text: "#92400e" },
+  Spanish: { bg: "#ede9fe", text: "#5b21b6" }, Art: { bg: "#fce4ec", text: "#880e4f" },
+  PE: { bg: "#e0f2f1", text: "#004d40" }, Other: { bg: "#f3f4f6", text: "#374151" },
+};
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const LS_KEY = "hw_planner_url";
+
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  if (lines.length < 2) return [];
+  const headers = csvLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = csvLine(line); const obj = {};
+    headers.forEach((h,i) => obj[h.trim()] = (vals[i]||"").trim());
+    return obj;
+  }).filter(r => Object.values(r).some(v => v));
+}
+function csvLine(line) {
+  const r = []; let c = "", q = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (q) { if (ch==='"'&&line[i+1]==='"'){c+='"';i++} else if(ch==='"')q=false; else c+=ch; }
+    else { if(ch==='"')q=true; else if(ch===','){r.push(c);c=""} else c+=ch; }
+  }
+  r.push(c); return r;
+}
+function parseDateStr(s) {
+  if (!s) return null; let d;
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) d = new Date(s.slice(0,10)+"T12:00:00");
+  else if (/^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(s)) {
+    const p=s.split("/"); let y=parseInt(p[2]); if(y<100)y+=2000;
+    d = new Date(y, parseInt(p[0])-1, parseInt(p[1]), 12);
+  } else d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+function getDaysUntil(date) {
+  const now=new Date();now.setHours(0,0,0,0);const t=new Date(date);t.setHours(0,0,0,0);
+  return Math.round((t-now)/86400000);
+}
+function formatDue(date) {
+  const d=getDaysUntil(date);
+  if(d<0)return`${Math.abs(d)}d overdue`;if(d===0)return"Today";if(d===1)return"Tomorrow";
+  const n=date.toLocaleDateString("en-US",{weekday:"short"});
+  if(d<=7)return`${n} (${d}d)`;
+  return date.toLocaleDateString("en-US",{month:"short",day:"numeric"})+` (${d}d)`;
+}
+function priorityScore(a) {
+  const d=getDaysUntil(a.dueDate);
+  if(d<0)return 1000+Math.abs(d)*10;if(d===0)return 900;if(d===1)return 800;
+  if(a.typeKey==="recurring"&&a.isToday)return 750;
+  if(a.typeKey==="project"||a.typeKey==="test")return 500+(Math.ceil((a.minutes||30)/30)/Math.max(d,1))*300;
+  if(a.typeKey==="recurring")return 350-d*20;
+  return Math.max(0,400-d*40);
+}
+function priorityLabel(s) {
+  if(s>=900)return{text:"DO NOW",color:"#dc2626",bg:"#fef2f2"};
+  if(s>=700)return{text:"URGENT",color:"#ea580c",bg:"#fff7ed"};
+  if(s>=400)return{text:"START SOON",color:"#d97706",bg:"#fffbeb"};
+  if(s>=200)return{text:"PLAN AHEAD",color:"#2563eb",bg:"#eff6ff"};
+  return{text:"ON RADAR",color:"#6b7280",bg:"#f9fafb"};
+}
+
+function genRecurring(defs) {
+  const today=new Date();today.setHours(0,0,0,0);const tIdx=today.getDay();const chunks=[];
+  for(const def of defs){
+    const duI=DAYS.indexOf(def.dueDay),stI=DAYS.indexOf(def.startDay);
+    if(duI===-1||stI===-1)continue;
+    const sess=def.sessions||5,minP=Math.ceil((def.totalMinutes||60)/sess);
+    let dud=(duI-tIdx+7)%7;const dueD=new Date(today);dueD.setDate(dueD.getDate()+dud);
+    let span=(duI-stI+7)%7;if(span===0)span=7;
+    const stD=new Date(dueD);stD.setDate(stD.getDate()-span);
+    const sDays=[];for(let i=0;i<sess&&i<span;i++){const sd=new Date(stD);sd.setDate(sd.getDate()+i);sDays.push(sd);}
+    const tStr=today.toDateString();
+    if(today>=stD&&today<=dueD){
+      let sn=0,isS=false;
+      for(let i=0;i<sDays.length;i++){if(sDays[i].toDateString()===tStr){sn=i+1;isS=true;break;}}
+      chunks.push({title:def.title,className:def.className,type:"Recurring Chunk",typeKey:"recurring",
+        dueDate:dueD,minutes:minP,status:"Not Started",
+        notes:isS?`Session ${sn} of ${sess} · ${minP} min today`+(def.notes?` · ${def.notes}`:""):(def.notes||""),
+        isToday:isS,isRecurring:true,
+        sessionInfo:isS?`Session ${sn}/${sess}`:`${sess} sessions, ${def.startDay}–${DAYS[(duI-1+7)%7].slice(0,3)}`});
+    }
+  }
+  return chunks;
+}
+
+function buildPlan(assignments) {
+  const mx=150;const active=assignments.filter(a=>a.status!=="Done").map(a=>({...a,score:priorityScore(a)})).sort((a,b)=>b.score-a.score);
+  const plan=[];let tot=0;
+  for(const a of active){
+    const d=getDaysUntil(a.dueDate);
+    if(a.typeKey==="recurring"&&a.isToday){plan.push({...a,todayMin:a.minutes,reason:`Today's chunk · Due ${formatDue(a.dueDate)}`});tot+=a.minutes;continue;}
+    if(d<=0){plan.push({...a,todayMin:a.minutes,reason:d<0?"Overdue!":"Due today"});tot+=a.minutes;continue;}
+    if(d===1){plan.push({...a,todayMin:a.minutes,reason:"Due tomorrow"});tot+=a.minutes;continue;}
+    if((a.typeKey==="project"||a.typeKey==="test")&&d<=a.minutes/20){
+      const ch=Math.min(Math.ceil(a.minutes/Math.max(d,1)),45);
+      if(tot+ch<=mx+30){plan.push({...a,todayMin:ch,reason:`${ch} min chunk — stay on track`});tot+=ch;}continue;}
+    if(d<=3&&tot<mx){const ch=Math.min(a.minutes,mx-tot);if(ch>=10){plan.push({...a,todayMin:ch,reason:`Due in ${d} days`});tot+=ch;}}
+  }
+  return{plan,totalMinutes:tot};
+}
+
+function xformSheet(rows) {
+  return rows.filter(r=>r["Assignment"]&&r["Due Date"]).map(r=>{
+    const t=r["Type"]||"Daily Homework";const ti=TYPES_MAP[t]||TYPES_MAP["Daily Homework"];
+    return{title:r["Assignment"],className:r["Class"]||"Other",type:t,typeKey:ti.key,
+      dueDate:parseDateStr(r["Due Date"]),minutes:parseInt(r["Est. Minutes"])||30,
+      status:r["Status"]||"Not Started",notes:r["Notes"]||""};
+  }).filter(a=>a.dueDate!==null);
+}
+function xformRecur(rows) {
+  const defs=rows.filter(r=>r["Assignment"]&&r["Due Day"]).map(r=>({
+    title:r["Assignment"],className:r["Class"]||"Other",dueDay:r["Due Day"],
+    startDay:r["Start Day"]||"Monday",totalMinutes:parseInt(r["Total Minutes"])||60,
+    sessions:parseInt(r["Sessions"])||5,notes:r["Notes"]||""}));
+  return genRecurring(defs);
+}
+
+function getDemoData() {
+  const today=new Date();const d=n=>{const dt=new Date(today);dt.setDate(dt.getDate()+n);return dt;};
+  return{assignments:[
+    {title:"Read Ch. 12 — To Kill a Mockingbird",className:"English",type:"Reading",typeKey:"reading",dueDate:d(1),minutes:30,status:"Not Started",notes:"Answer questions at end of chapter"},
+    {title:"Worksheet 7.3 — Linear Equations",className:"Math",type:"Daily Homework",typeKey:"daily",dueDate:d(1),minutes:25,status:"Not Started",notes:""},
+    {title:"Spanish vocab quiz — Unit 5",className:"Spanish",type:"Test/Quiz",typeKey:"test",dueDate:d(3),minutes:45,status:"Not Started",notes:"Study Quizlet flashcards"},
+    {title:"History essay — Causes of WWI",className:"History",type:"Project/Paper",typeKey:"project",dueDate:d(7),minutes:90,status:"Not Started",notes:"3 pages, MLA, need 3 sources"},
+    {title:"Science lab report — Density",className:"Science",type:"Project/Paper",typeKey:"project",dueDate:d(4),minutes:60,status:"Not Started",notes:"Include data table and graph"},
+    {title:"Math practice problems pg 204",className:"Math",type:"Daily Homework",typeKey:"daily",dueDate:d(0),minutes:20,status:"Not Started",notes:"Odd numbers only"},
+  ],recurring:genRecurring([
+    {title:"Online Math Program — 60 problems",className:"Math",dueDay:"Friday",startDay:"Sunday",totalMinutes:100,sessions:5,notes:"12 problems per session"},
+  ])};
+}
+
+function Card({item, showReason, todayMin}) {
+  const p=priorityLabel(item.score||priorityScore(item));
+  const cc=CLASS_COLORS[item.className]||CLASS_COLORS.Other;
+  const ti=TYPES_MAP[item.type]||TYPES_MAP["Daily Homework"];
+  return(
+    <div className="card-row fade" style={{opacity:item.status==="Done"?0.45:1}}>
+      <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:6,flexWrap:"wrap"}}>
+        <span className="badge" style={{color:p.color,background:p.bg}}>{p.text}</span>
+        <span className="badge-class" style={{color:cc.text,background:cc.bg}}>{item.className}</span>
+        <span style={{fontSize:12,color:"#a8a29e"}}>{ti.icon}</span>
+        {item.isRecurring&&<span className="badge-rec">{item.sessionInfo||"WEEKLY"}</span>}
+        {item.status==="In Progress"&&<span className="badge-ip">IN PROGRESS</span>}
+      </div>
+      <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>{item.title}</div>
+      <div style={{fontSize:13,color:"#78716c"}}>
+        {showReason&&item.reason&&<>{item.reason} · </>}
+        {todayMin?`${todayMin} min`:`${item.minutes} min`}
+        {!showReason&&<> · Due {formatDue(item.dueDate)}</>}
+      </div>
+      {item.notes&&<div className="notes">{item.notes}</div>}
+    </div>
+  );
+}
+
+function App() {
+  const [asgn, setAsgn] = useState([]);
+  const [recur, setRecur] = useState([]);
+  const [view, setView] = useState("today");
+  const [csvUrl, setCsvUrl] = useState(()=>{try{return localStorage.getItem(LS_KEY)||""}catch{return""}});
+  const [urlIn, setUrlIn] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [debugInfo, setDebugInfo] = useState("");
+  const [lastSync, setLastSync] = useState(null);
+  const [showSetup, setShowSetup] = useState(true);
+  const [useDemo, setUseDemo] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const fetchSheet = useCallback(async (url) => {
+    if (!url) return;
+    setLoading(true); setError(""); setDebugInfo(""); setStatusMsg("Connecting…");
+    try {
+      // Step 1: Try fetching the URL exactly as the user gave it
+      setStatusMsg("Fetching assignments…");
+      let text1 = "";
+      let fetchUrl = url;
+      let debug = `Trying: ${url}\n`;
+
+      try {
+        const res = await fetch(url);
+        debug += `Status: ${res.status} ${res.statusText}\n`;
+        if (res.ok) {
+          text1 = await res.text();
+          debug += `Response length: ${text1.length} chars\n`;
+          debug += `First 100 chars: ${text1.slice(0,100)}\n`;
+        }
+      } catch (e) {
+        debug += `Fetch error: ${e.message}\n`;
+      }
+
+      // If the direct URL returned HTML or failed, try with gid=0
+      if (!text1 || text1.includes("<!DOCTYPE") || text1.includes("<html")) {
+        debug += `Direct fetch returned HTML or failed. Trying with gid=0…\n`;
+        try {
+          const url2 = new URL(url);
+          url2.searchParams.set("gid", "0");
+          url2.searchParams.set("single", "true");
+          url2.searchParams.set("output", "csv");
+          fetchUrl = url2.toString();
+          debug += `Trying: ${fetchUrl}\n`;
+          const res2 = await fetch(fetchUrl);
+          debug += `Status: ${res2.status} ${res2.statusText}\n`;
+          if (res2.ok) {
+            text1 = await res2.text();
+            debug += `Response length: ${text1.length} chars\n`;
+            debug += `First 100 chars: ${text1.slice(0,100)}\n`;
+          }
+        } catch (e) {
+          debug += `gid=0 error: ${e.message}\n`;
+        }
+      }
+
+      // If still HTML or empty, we have a problem
+      if (!text1 || text1.includes("<!DOCTYPE") || text1.includes("<html")) {
+        setDebugInfo(debug);
+        throw new Error("Google Sheets returned an HTML page instead of CSV data. See debug info below.");
+      }
+
+      const rows1 = parseCSV(text1);
+      debug += `Parsed ${rows1.length} rows\n`;
+      if (rows1.length > 0) debug += `Headers: ${Object.keys(rows1[0]).join(", ")}\n`;
+      const transformed = xformSheet(rows1);
+      debug += `Valid assignments: ${transformed.length}\n`;
+
+      // Step 2: Try to fetch recurring sheet
+      let recurChunks = [];
+      setStatusMsg("Checking for recurring assignments…");
+      for (const gid of [1, 2, 100, 200, 1000000000]) {
+        try {
+          const rUrl = new URL(url);
+          rUrl.searchParams.set("gid", gid.toString());
+          rUrl.searchParams.set("single", "true");
+          rUrl.searchParams.set("output", "csv");
+          const res = await fetch(rUrl.toString());
+          if (!res.ok) continue;
+          const txt = await res.text();
+          if (txt.includes("<!DOCTYPE")) continue;
+          const rows = parseCSV(txt);
+          if (rows.length > 0 && rows[0]["Assignment"] && rows[0]["Due Day"]) {
+            recurChunks = xformRecur(rows);
+            debug += `Found recurring sheet at gid=${gid}: ${recurChunks.length} chunks\n`;
+            break;
+          }
+        } catch { continue; }
+      }
+
+      if (transformed.length === 0 && recurChunks.length === 0) {
+        setDebugInfo(debug);
+        throw new Error("No valid assignments found. Check that column headers match: Assignment, Class, Type, Due Date, Est. Minutes, Status, Notes");
+      }
+
+      setAsgn(transformed);
+      setRecur(recurChunks);
+      setLastSync(new Date());
+      setShowSetup(false);
+      setStatusMsg("");
+      setDebugInfo("");
+      try { localStorage.setItem(LS_KEY, url); } catch {}
+    } catch (e) { setError(e.message); setStatusMsg(""); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { if (csvUrl) { setUrlIn(csvUrl); fetchSheet(csvUrl); } }, []);
+  useEffect(() => { if (!csvUrl) return; const iv = setInterval(()=>fetchSheet(csvUrl), 300000); return ()=>clearInterval(iv); }, [csvUrl, fetchSheet]);
+
+  function connect() { if(!urlIn.trim())return; setCsvUrl(urlIn.trim()); fetchSheet(urlIn.trim()); }
+  function loadDemo() { const{assignments:a,recurring:r}=getDemoData(); setAsgn(a);setRecur(r);setUseDemo(true);setShowSetup(false);setLastSync(new Date()); }
+
+  const all = useMemo(()=>[...asgn,...recur],[asgn,recur]);
+  const plan = useMemo(()=>buildPlan(all),[all]);
+  const activeAll = useMemo(()=>all.filter(a=>a.status!=="Done").map(a=>({...a,score:priorityScore(a)})).sort((a,b)=>b.score-a.score),[all]);
+  const doneCount = all.filter(a=>a.status==="Done").length;
+
+  return(
+  <>
+    <div className="header">
+      <h1>Homework Planner</h1>
+      <p className="subtitle">
+        {new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}
+        {lastSync&&!showSetup&&<span className="sync-time">· Synced {lastSync.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</span>}
+      </p>
+    </div>
+
+    {showSetup?(
+      <div className="card card-pad" style={{marginTop:16}}>
+        <h2 style={{fontSize:18,fontWeight:700,marginBottom:6}}>Connect Your Google Sheet</h2>
+        <p style={{fontSize:14,color:"#78716c",marginBottom:20,lineHeight:1.5}}>
+          Paste the published CSV URL from your Google Sheet.
+        </p>
+        <div className="info-box" style={{marginBottom:20}}>
+          <strong>One-time setup:</strong><br/>
+          1. Upload the spreadsheet template to Google Sheets<br/>
+          2. Go to <strong>File → Share → Publish to web</strong><br/>
+          3. Select <strong>"Assignments"</strong> sheet (not Entire Document) → <strong>"CSV"</strong><br/>
+          4. Click <strong>Publish</strong> and paste the URL below<br/>
+          <br/>
+          <em style={{fontSize:12}}>Tip: after connecting Assignments, add the Recurring sheet separately in Settings if needed.</em>
+        </div>
+        <div className="form-row">
+          <input className="form-input" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"
+            value={urlIn} onChange={e=>setUrlIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&connect()} />
+          <button className="btn" onClick={connect} disabled={loading||!urlIn.trim()}>
+            {loading?"Loading…":"Connect"}
+          </button>
+        </div>
+        {statusMsg&&<div className="status">{statusMsg}</div>}
+        {error&&<div className="err">{error}</div>}
+        {debugInfo&&<div className="debug"><strong>Debug info (share this with Claude if it still doesn't work):</strong><br/>{debugInfo}</div>}
+        <div className="divider"><button className="btn-link" onClick={loadDemo}>Try with demo data first</button></div>
+      </div>
+    ):(
+    <>
+      <div className="tabs">
+        {[{k:"today",l:"Today's Plan"},{k:"all",l:"All"},{k:"settings",l:"⚙"}].map(t=>(
+          <button key={t.k} className={`tab ${view===t.k?"active":""} ${t.k==="settings"?"tab-sm":""}`}
+            onClick={()=>setView(t.k)}>{t.l}</button>
+        ))}
+      </div>
+
+      {view==="today"&&(
+        <div>
+          {plan.plan.length>0?(
+          <>
+            <div className="card summary">
+              <div><div className="summary-label">TODAY'S WORKLOAD</div><div className="summary-val">{plan.totalMinutes} min</div></div>
+              <div style={{textAlign:"right"}}><div className="summary-label">TASKS</div><div className="summary-val">{plan.plan.length}</div></div>
+            </div>
+            <div className="stack">{plan.plan.map((item,i)=><Card key={i} item={item} showReason todayMin={item.todayMin}/>)}</div>
+          </>
+          ):(
+            <div className="card empty">
+              <div style={{fontSize:40,marginBottom:8}}>🎉</div>
+              <p style={{fontSize:16,fontWeight:600,marginBottom:4}}>Nothing urgent today!</p>
+              <p style={{fontSize:14,color:"#78716c"}}>{activeAll.length>0?`${activeAll.length} coming up.`:"All caught up."}</p>
+            </div>
+          )}
+          {csvUrl&&<button className="btn-ref" onClick={()=>fetchSheet(csvUrl)} disabled={loading}>{loading?"Refreshing…":"↻ Refresh"}</button>}
+        </div>
+      )}
+
+      {view==="all"&&(
+        <div>
+          {recur.length>0&&(
+            <div style={{marginBottom:20}}>
+              <div className="sec-label sec-purple">🔁 RECURRING ({recur.length})</div>
+              <div className="stack stack-tight">{recur.map((item,i)=><Card key={`r${i}`} item={item}/>)}</div>
+            </div>
+          )}
+          {asgn.filter(a=>a.status!=="Done").length>0&&(
+            <div style={{marginBottom:20}}>
+              <div className="sec-label">ASSIGNMENTS ({asgn.filter(a=>a.status!=="Done").length})</div>
+              <div className="stack stack-tight">
+                {asgn.filter(a=>a.status!=="Done").map(a=>({...a,score:priorityScore(a)})).sort((a,b)=>b.score-a.score)
+                  .map((item,i)=><Card key={`a${i}`} item={item}/>)}
+              </div>
+            </div>
+          )}
+          {doneCount>0&&<p style={{fontSize:13,color:"#a8a29e",textAlign:"center",marginTop:16}}>{doneCount} completed hidden</p>}
+          {activeAll.length===0&&<div className="card empty"><p style={{fontSize:15,color:"#78716c"}}>No active assignments.</p></div>}
+        </div>
+      )}
+
+      {view==="settings"&&(
+        <div className="card card-pad">
+          <h2 style={{fontSize:17,fontWeight:700,marginBottom:16}}>Settings</h2>
+          <div style={{marginBottom:20}}>
+            <label style={{fontSize:12,fontWeight:600,color:"#78716c",display:"block",marginBottom:6,letterSpacing:"0.04em"}}>GOOGLE SHEET CSV URL</label>
+            <div className="form-row" style={{marginBottom:0}}>
+              <input className="form-input" style={{fontSize:13,padding:"10px 12px"}} type="url" placeholder="Paste published CSV URL"
+                value={urlIn||csvUrl} onChange={e=>setUrlIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&connect()}/>
+              <button className="btn" style={{fontSize:13,padding:"10px 16px"}} onClick={connect} disabled={loading}>{loading?"…":"Sync"}</button>
+            </div>
+            {error&&<div className="err" style={{marginTop:8,marginBottom:0}}>{error}</div>}
+            {debugInfo&&<div className="debug" style={{marginTop:8,marginBottom:0}}><strong>Debug:</strong><br/>{debugInfo}</div>}
+          </div>
+          <div className="info-box" style={{marginBottom:16}}>
+            <strong>Priority levels:</strong><br/>
+            <span style={{color:"#dc2626",fontWeight:700}}>DO NOW</span> — Overdue or due today<br/>
+            <span style={{color:"#ea580c",fontWeight:700}}>URGENT</span> — Due tomorrow, or today's recurring chunk<br/>
+            <span style={{color:"#d97706",fontWeight:700}}>START SOON</span> — 2–3 days, or projects needing daily work<br/>
+            <span style={{color:"#2563eb",fontWeight:700}}>PLAN AHEAD</span> — This week<br/>
+            <span style={{color:"#6b7280",fontWeight:700}}>ON RADAR</span> — Further out
+          </div>
+          <div className="info-box info-purple">
+            <strong>🔁 Recurring assignments:</strong><br/>
+            Use the "Recurring" tab in your spreadsheet. The planner auto-generates daily chunks.
+          </div>
+          {useDemo&&(
+            <div style={{marginTop:16,textAlign:"center"}}>
+              <p style={{fontSize:13,color:"#a8a29e",marginBottom:8}}>Using demo data</p>
+              <button style={{background:"none",border:"1px solid #d6d3d1",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:13,color:"#57534e"}}
+                onClick={()=>{setShowSetup(true);setUseDemo(false);setAsgn([]);setRecur([]);setView("today");}}>
+                Connect real sheet
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+    )}
+  </>);
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(<App/>);
+</script>
+</body>
+</html>
